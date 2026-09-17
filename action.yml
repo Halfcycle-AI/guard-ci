@@ -1,0 +1,52 @@
+name: Halfcycle guard
+description: Check this change against your project's guards. Nothing to store, nothing to configure but one permission.
+
+# -----------------------------------------------------------------------------
+# WHAT THIS ACTION DOES NOT DO, AND WHY THAT IS THE DESIGN.
+#
+# It does not request the identity token, it does not name the audience, and it
+# does not call the exchange. The guard binary already does all three, and the
+# audience it asks for is imported from one shared declaration that the verifying
+# service reads too. A second request written here would be a second hand-kept
+# copy of that string — and a divergence between copies presents as CI refused
+# with nothing to read, which is the exact failure that declaration exists to
+# make impossible.
+#
+# So this action's whole job is to put the guard binary in front of a job that
+# has been granted the permission, with enough history to know what changed, and
+# to say something a person can act on when one of those is missing. Every
+# message below names a fix; none of them explains a mechanism.
+# -----------------------------------------------------------------------------
+
+inputs:
+  working-directory:
+    description: >-
+      The directory holding your project, if it is not the root of the checkout.
+      Defaults to the root.
+    required: false
+    default: '.'
+  diff-base:
+    description: >-
+      The commit this change started from, if your workflow already knows it.
+      Leave it unset and the check works it out; a GitHub push event carries the
+      value as github.event.before, which is more exact than anything that can be
+      inferred. It is never required.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Halfcycle guard
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        # Passed through rather than read from the environment inside the script:
+        # the guard binary reads this name itself, and an input that silently did
+        # nothing would be worse than no input at all.
+        HALFCYCLE_DIFF_BASE: ${{ inputs.diff-base }}
+      run: bash "$GITHUB_ACTION_PATH/run.sh"
+
+branding:
+  icon: shield
+  color: purple
