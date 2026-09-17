@@ -4,19 +4,29 @@ Check every change against your project's guards, in CI, with no secret stored
 anywhere.
 
 ```yaml
-permissions:
-  contents: read
-  id-token: write
+name: Halfcycle guard
+on:
+  push:
+  pull_request:
 
 jobs:
   guard:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: Halfcycle-AI/guard-ci@v1
 ```
+
+**No workflow yet?** Save that as `.github/workflows/halfcycle-guard.yml`. It is a
+complete file: commit it, and the check runs on the next push and on every pull
+request. **Already have one?** Copy the `guard` job under its `jobs:` key. The job
+carries its own `permissions` block, so nothing else in your file changes — no
+other job gains or loses a permission.
 
 That permissions block is the whole of what your project configures. There is no
 token to put in your repository's secrets, no project id to look up, and no
@@ -25,8 +35,9 @@ address to set.
 **Both lines, not just the second.** Declaring any permission replaces the
 defaults rather than adding to them, so a block naming only `id-token` takes read
 access away from `actions/checkout` and a private repository stops checking out
-before the guard is reached. If your workflow already has a `permissions` block,
-add `id-token: write` to it and leave the rest alone.
+before the guard is reached. It sits on the job, not at the top of the file, for
+the same reason: a workflow-level block would replace the defaults for every
+other job in that file too.
 
 
 ## What you have to do first, once
@@ -86,6 +97,6 @@ cannot run must never be mistaken for a check that found nothing.
 - **No Node on the runner** — add `actions/setup-node` before the step. This step
   will not install one for you: changing the Node version your workflow builds
   with is not something a check should do behind your back.
-- **No permission** — add the permissions block above, both lines of it.
+- **No permission** — add the permissions block above to the job, both lines of it.
 - **This repository is claimed by nobody** — run `npx halfcycle ci bind` as above.
   The message names the repository it verified, so you can see which one to bind.
