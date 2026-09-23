@@ -1,6 +1,11 @@
 # Halfcycle guard — GitHub Actions
 
-Check every change against your project's guards, in CI, with no secret stored
+**Halfcycle-internal.** Setting up a project's CI is part of the project, not something
+Halfcycle does for a client — this action, and the exchange it calls, exist for
+**Halfcycle's own repositories**. Binding a repository is done by a Halfcycle engineer
+directly against the control plane, not by a step you run yourself.
+
+Check every change against a project's guards, in CI, with no secret stored
 anywhere.
 
 ```yaml
@@ -39,22 +44,19 @@ before the guard is reached. It sits on the job, not at the top of the file, for
 the same reason: a workflow-level block would replace the defaults for every
 other job in that file too.
 
-
-## What you have to do first, once
-
-On your own machine, in the project:
+## What has to happen first, once
 
 ```
 npx halfcycle
-npx halfcycle ci bind <owner>/<repo>
 ```
 
-The first writes the guard into your project — commit what it writes, including
-`.halfcycle/bin/`. The second tells Halfcycle that this project's CI runs from
-that repository. Both are one-time, and the second is the only thing that makes a
-CI run mean anything: without it, Halfcycle has a signed statement of which
-repository the job is in and no idea whose project that is. The check says exactly
-that if you skip it.
+writes the guard into the repository — commit what it writes, including
+`.halfcycle/bin/`. Separately, a Halfcycle engineer binds the repository against
+the control plane's trust-binding route, signed in with their own account
+credential — there is no CLI step for this any more. Binding is the only thing
+that makes a CI run mean anything: without it, Halfcycle has a signed statement of
+which repository the job is in and no idea whose project that is. The check says
+exactly that if it is skipped.
 
 ## What happens on each run
 
@@ -98,5 +100,6 @@ cannot run must never be mistaken for a check that found nothing.
   will not install one for you: changing the Node version your workflow builds
   with is not something a check should do behind your back.
 - **No permission** — add the permissions block above to the job, both lines of it.
-- **This repository is claimed by nobody** — run `npx halfcycle ci bind` as above.
-  The message names the repository it verified, so you can see which one to bind.
+- **This repository is claimed by nobody** — a Halfcycle engineer has not bound it
+  yet. The message names the repository it verified, so it is clear which one to
+  bind.
